@@ -15,7 +15,7 @@ class PatternRecognizer:
         
         self._last_index_finger_coord = None
 
-        self._video_width, self._video_height = 640, 480
+        self._video_width, self._video_height = 1200, 800
         self._gt_path = [f for f in reversed([7, 3, 2, 1])] #start index from 0
     
     def _make_gt_visible(self, image, nodes):
@@ -31,12 +31,21 @@ class PatternRecognizer:
         return cap
 
     def _calc_nodes(self, frame_w, frame_h):
+        center_x, center_y = frame_w // 2, frame_h //2
+        offset_x, offset_y = 50, 50
+
+        # print(frame_w, frame_h)
+        
+        # node_0 = (int(center_y - offset_y * 1), int(center_x - offset_x * 1))
+
         node_0 =  ((int(frame_h * 0.44), int(frame_w * 0.1)), 0)
         node_1 =  ((int(frame_h * 0.66), int(frame_w * 0.1)), 1)
         node_2 =  ((int(frame_h * 0.88), int(frame_w * 0.1)), 2)
+
         node_3 =  ((int(frame_h * 0.44), int(frame_w * 0.3)), 3)
         node_4 =  ((int(frame_h * 0.66), int(frame_w * 0.3)), 4)
         node_5 =  ((int(frame_h * 0.88), int(frame_w * 0.3)), 5)
+
         node_6 =  ((int(frame_h * 0.44), int(frame_w * 0.5)), 6)
         node_7 =  ((int(frame_h * 0.66), int(frame_w * 0.5)), 7)
         node_8 =  ((int(frame_h * 0.88), int(frame_w * 0.5)), 8)
@@ -47,6 +56,7 @@ class PatternRecognizer:
             
     def _draw_nodes(self, image, nodes):
         for node in nodes:
+            print(node)
             cv2.circle(image, node[0], 20, (233, 129, 55), -1)
 
 
@@ -116,19 +126,22 @@ class PatternRecognizer:
     def handle_stream(self):
         cap = self._read_stream(-1)
         
-        nodes = self._calc_nodes(self._video_width, self._video_height)
+        nodes = self._calc_nodes(self._video_width, self._video_height)        
 
         with self._mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tracking_confidence=0.5) as hands:
             while cap.isOpened():
                 is_authorized = False
-                jojo = list(set([f[1] for f in reversed(self._selected_nodes)]))
-                if  jojo == self._gt_path:
+                query_pattern = list(set([f[1] for f in reversed(self._selected_nodes)]))
+                print(query_pattern)
+                print(self._gt_path)
+                if  query_pattern == self._gt_path:
                     is_authorized = True
                     
 
                 success, image = cap.read()
+                image = cv2.resize(image, (self._video_width, self._video_height))
                 
-                
+                print(is_authorized)
                 if not(is_authorized):
                     self._make_gt_visible(image, nodes)
 
@@ -170,7 +183,6 @@ class PatternRecognizer:
                 
                 image.flags.writeable = False
                 
-
                 if results.multi_hand_landmarks:
                     for hand_landmarks in results.multi_hand_landmarks:
                         # print(hand_landmarks)
@@ -184,7 +196,7 @@ class PatternRecognizer:
                         if not(is_authorized):
                             self._set_path(nodes, x_index_finger, y_index_finger)
                         
-
+                # cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
                 cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
                 if cv2.waitKey(5) & 0xFF == 27:
                     break
