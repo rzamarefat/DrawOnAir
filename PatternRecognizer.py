@@ -38,17 +38,17 @@ class PatternRecognizer:
         
         # node_0 = (int(center_y - offset_y * 1), int(center_x - offset_x * 1))
 
-        node_0 =  ((int(frame_h * 0.44), int(frame_w * 0.1)), 0)
-        node_1 =  ((int(frame_h * 0.66), int(frame_w * 0.1)), 1)
-        node_2 =  ((int(frame_h * 0.88), int(frame_w * 0.1)), 2)
+        node_0 =  ((int(frame_h * 0.5), int(frame_w * 0.1)), 0)
+        node_1 =  ((int(frame_h * 0.75), int(frame_w * 0.1)), 1)
+        node_2 =  ((int(frame_h * 1.0), int(frame_w * 0.1)), 2)
 
-        node_3 =  ((int(frame_h * 0.44), int(frame_w * 0.3)), 3)
-        node_4 =  ((int(frame_h * 0.66), int(frame_w * 0.3)), 4)
-        node_5 =  ((int(frame_h * 0.88), int(frame_w * 0.3)), 5)
+        node_3 =  ((int(frame_h * 0.5), int(frame_w * 0.3)), 3)
+        node_4 =  ((int(frame_h * 0.75), int(frame_w * 0.3)), 4)
+        node_5 =  ((int(frame_h * 1.0), int(frame_w * 0.3)), 5)
 
-        node_6 =  ((int(frame_h * 0.44), int(frame_w * 0.5)), 6)
-        node_7 =  ((int(frame_h * 0.66), int(frame_w * 0.5)), 7)
-        node_8 =  ((int(frame_h * 0.88), int(frame_w * 0.5)), 8)
+        node_6 =  ((int(frame_h * 0.5), int(frame_w * 0.5)), 6)
+        node_7 =  ((int(frame_h * 0.75), int(frame_w * 0.5)), 7)
+        node_8 =  ((int(frame_h * 1.0), int(frame_w * 0.5)), 8)
         
         nodes = [node_0, node_1, node_2, node_3, node_4, node_5, node_6, node_7, node_8, node_8]
 
@@ -56,7 +56,6 @@ class PatternRecognizer:
             
     def _draw_nodes(self, image, nodes):
         for node in nodes:
-            print(node)
             cv2.circle(image, node[0], 20, (233, 129, 55), -1)
 
 
@@ -121,8 +120,29 @@ class PatternRecognizer:
                 self._selected_nodes.append(node_8)
                 self._selected_nodes_id.append(8)
 
+    def _draw_clear_btn(self, image, image_width, image_height):
+        rec_w, rec_h = 200, 100
 
+        start_point = (int(image_width - 0.2*image_width), int(image_height - 0.2*image_height))
+        end_point = (int(image_width - 0.16*image_width) + rec_w, int(image_height - 0.16*image_height) + rec_h)
+        cv2.rectangle(image, start_point, end_point, (25, 140, 225), thickness=-1)
+
+        return start_point, end_point
             
+
+    def _check_clearance(self, x_index_finger, y_index_finger, clear_btn_start, clear_btn_end):
+        print("x_index_finger", x_index_finger)
+        print("y_index_finger", y_index_finger)
+        print("clear_btn_start", clear_btn_start)
+        print("clear_btn_end", clear_btn_end)
+
+        if x_index_finger > clear_btn_start[0] and y_index_finger > clear_btn_start[1]:
+            self._selected_nodes = []
+            self._selected_nodes_id = []
+        
+
+
+    
     def handle_stream(self):
         cap = self._read_stream(-1)
         
@@ -130,10 +150,9 @@ class PatternRecognizer:
 
         with self._mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tracking_confidence=0.5) as hands:
             while cap.isOpened():
+                
                 is_authorized = False
                 query_pattern = list(set([f[1] for f in reversed(self._selected_nodes)]))
-                print(query_pattern)
-                print(self._gt_path)
                 if  query_pattern == self._gt_path:
                     is_authorized = True
                     
@@ -141,13 +160,12 @@ class PatternRecognizer:
                 success, image = cap.read()
                 image = cv2.resize(image, (self._video_width, self._video_height))
                 
-                print(is_authorized)
                 if not(is_authorized):
                     self._make_gt_visible(image, nodes)
 
                 
                 if is_authorized:
-                    cv2.putText(image, "Authorized", (200, 200), cv2.FONT_HERSHEY_COMPLEX, 1, (120, 110, 225), 2)
+                    cv2.putText(image, "Authorized", (image_width//2 -50, image_height//2-50), cv2.FONT_HERSHEY_COMPLEX, 1, (120, 110, 225), 2)
 
                 
                 # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -161,9 +179,8 @@ class PatternRecognizer:
 
                 if not(is_authorized):
                     self._draw_nodes(image, nodes)
-                
-
-                
+                    clear_btn_start, clear_btn_end  = self._draw_clear_btn(image, image_width, image_height)
+            
                     for node, _ in self._selected_nodes:
                         cv2.circle(image, node, 20, (10, 100, 200), -1)
                 
@@ -191,13 +208,26 @@ class PatternRecognizer:
                         x_index_finger = int(hand_landmarks.landmark[self._mp_hands.HandLandmark.INDEX_FINGER_TIP].x * image_width)
                         y_index_finger = int(hand_landmarks.landmark[self._mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image_height)
 
+                        self._check_clearance(x_index_finger, y_index_finger, clear_btn_start, clear_btn_end)
+
+                        print(self._selected_nodes)
+                        # cv2.circle(image, clear_btn_start, 10, color=(60, 98, 220), thickness=-1)
+                        # cv2.circle(image, clear_btn_end, 10, color=(120, 129, 129), thickness=-1)
+
+                        
                         self._last_index_finger_coord = (x_index_finger, y_index_finger)
 
                         if not(is_authorized):
                             self._set_path(nodes, x_index_finger, y_index_finger)
                         
-                # cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
-                cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
+
+
+                if not(is_authorized):
+                    cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
+                else:
+                    cv2.imshow('MediaPipe Hands', cv2.flip(cv2.flip(image, 1), 1))
+                    cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
+
                 if cv2.waitKey(5) & 0xFF == 27:
                     break
             cap.release()
