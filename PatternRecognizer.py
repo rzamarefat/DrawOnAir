@@ -1,9 +1,7 @@
 import cv2
 import mediapipe as mp
-
-# mp_drawing = mp.solutions.drawing_utils
-# mp_drawing_styles = mp.solutions.drawing_styles
-# mp_hands = mp.solutions.hands
+import os
+import time
 
 class PatternRecognizer:
     def __init__(self):
@@ -14,18 +12,20 @@ class PatternRecognizer:
         self._selected_nodes_id = []
 
         self._clear_btn_color = (0, 0, 225)
+        self._video_width, self._video_height = 1200, 800
         
-        self._check_image = cv2.imread("/home/rzamarefat/projects/github_projects/pattern_pass_on_air/images/check.png")
-        self._check_image = cv2.resize(self._check_image, (120, 100))
-        self._check_image = cv2.flip(self._check_image, 1)
-        y = self._check_image.shape[1]
-        x = self._check_image.shape[0]
-        r = 10
-        self._check_image = self._check_image[y:(y+2*r), x:(x+2*r)]
+        
+        self._check_image = cv2.imread(os.path.join(os.getcwd(), "images", "check.png"))
+        self._check_image = cv2.resize(self._check_image, (self._video_width, self._video_height))
+        # self._check_image = cv2.flip(self._check_image, 1)
+        # y = self._check_image.shape[1]
+        # x = self._check_image.shape[0]
+        # r = 10
+        # self._check_image = self._check_image[y:(y+2*r), x:(x+2*r)]
         
         self._last_index_finger_coord = None
 
-        self._video_width, self._video_height = 1200, 800
+        
         self._gt_path = [f for f in [2, 4, 5, 1]] #start index from 0
     
     def _make_gt_visible(self, image, nodes):
@@ -172,8 +172,8 @@ class PatternRecognizer:
 
 
 
-                x_offset=y_offset=50
-                image[y_offset:y_offset+self._check_image.shape[0], x_offset:x_offset+self._check_image.shape[1]] = self._check_image
+                # x_offset=y_offset=50
+                # image[y_offset:y_offset+self._check_image.shape[0], x_offset:x_offset+self._check_image.shape[1]] = self._check_image
                 
                 if not(is_authorized):
                     self._make_gt_visible(image, nodes)
@@ -225,7 +225,6 @@ class PatternRecognizer:
 
                         self._check_clearance(x_index_finger, y_index_finger, clear_btn_start, clear_btn_end)
 
-                        print(self._selected_nodes)
                         # cv2.circle(image, clear_btn_start, 10, color=(60, 98, 220), thickness=-1)
                         # cv2.circle(image, clear_btn_end, 10, color=(120, 129, 129), thickness=-1)
 
@@ -240,8 +239,10 @@ class PatternRecognizer:
                 if not(is_authorized):
                     cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
                 else:
-                    cv2.imshow('MediaPipe Hands', cv2.flip(cv2.flip(image, 1), 1))
-                    cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
+                    cv2.imshow('MediaPipe Hands', self._check_image)
+
+                    # time.sleep(6)
+                    # cap.release()        
 
                 if cv2.waitKey(5) & 0xFF == 27:
                     break
