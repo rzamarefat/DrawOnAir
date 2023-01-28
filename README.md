@@ -14,4 +14,5 @@ pip install mediapipe
 ``` 
 3. Run PatternRecognizer.py
 ### Refs
-- [mediapipe](https://google.github.io/mediapipe/)
+
+- For hand landmark detection I have used [mediapipe](https://google.github.io/mediapipe/)
