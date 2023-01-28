@@ -7,5 +7,5 @@
 pip install mediapipe
 ``` 
 3. Run PatternRecognizer.py
-4. Refs
+### Refs
 - [mediapipe](https://google.github.io/mediapipe/)
