@@ -234,19 +234,19 @@ class PatternRecognizer:
                         if not(is_authorized):
                             self._set_path(nodes, x_index_finger, y_index_finger)
                         
-
+                
 
                 if not(is_authorized):
-                    cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
+                    cv2.imshow('Draw on Air', cv2.flip(image, 1))
                 else:
-                    cv2.imshow('MediaPipe Hands', self._check_image)
+                    cv2.imshow('Draw on Air', self._check_image)
 
-                    # time.sleep(6)
-                    # cap.release()        
-
+                
                 if cv2.waitKey(5) & 0xFF == 27:
                     break
+
             cap.release()
+            
 
 
 if __name__ == "__main__":
