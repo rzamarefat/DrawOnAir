@@ -1,6 +1,6 @@
 # Draw On Air
-- Demo
-- Usage 
+### Demo
+### Usage 
 1. Make an environment
 2. Install mediapipe using the following command
 ```
